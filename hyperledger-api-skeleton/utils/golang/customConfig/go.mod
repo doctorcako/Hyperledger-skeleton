@@ -1,11 +1,9 @@
-module repo.plexus.services/1329-004_incibe_reto06/utils/golang/customConfig
 
 go 1.20
 
 require (
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/spf13/viper v1.17.0
-	repo.plexus.services/1329-004_incibe_reto06/utils/golang/customError v0.0.0-20231116142851-d641c875de88
 )
 
 require (

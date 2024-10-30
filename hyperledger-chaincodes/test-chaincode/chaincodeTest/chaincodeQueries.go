@@ -165,7 +165,6 @@ func getAlloperations(ctx contractapi.TransactionContextInterface) ([]Operation,
 			return nil, fmt.Errorf("error unmarshal: %v", err)
 		}
 
-		incidences = append(operations, operation)
 	}
 
 	return operations, nil

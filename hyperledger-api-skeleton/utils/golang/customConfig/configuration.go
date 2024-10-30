@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
-	"repo.plexus.services/1329-004_incibe_reto06/utils/golang/customError"
 )
 
 type ServerConfiguration struct {

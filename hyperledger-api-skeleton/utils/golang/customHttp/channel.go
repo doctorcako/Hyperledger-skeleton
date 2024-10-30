@@ -3,7 +3,6 @@ package customHttp
 import (
 	"bytes"
 	"fmt"
-	"repo.plexus.services/1329-004_incibe_reto06/utils/golang/customHttp/concurrent"
 	"sync"
 	"time"
 )

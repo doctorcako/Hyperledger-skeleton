@@ -22,7 +22,7 @@ type stateQueryIterator interface {
 	shim.StateQueryIteratorInterface
 }
 
-// SetupTest sets up the mock test environment for IncidenceContract
+// SetupTest sets up the mock test environment
 func SetupTest() (*mocks.ChaincodeStub, *mocks.TransactionContext) {
 
 }

@@ -3,7 +3,6 @@ package aws
 import (
 	"context"
 	"github.com/lestrrat-go/jwx/jwk"
-	"repo.plexus.services/1329-004_incibe_reto06/utils/golang/customError"
 )
 
 func GetAWSCognitoJwk(region, userPoolId string) (jwk.Set, customError.Error) {
