@@ -1,0 +1,151 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: %ORG%-%HLF_ENV%
+  name: peer%NUM%-%ORG%-ck-com
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+       app: hyperledger
+       role: peer
+       org: %ORG%
+       name: peer%NUM%-%ORG%-ck-com
+  template:
+    metadata:
+      labels:
+       app: hyperledger
+       role: peer
+       org: %ORG%
+       name: peer%NUM%-%ORG%-ck-com
+    spec:
+     affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: name
+              operator: In
+              values:
+              - %NODE%
+     containers:
+       - name: couchdb
+         startupProbe:
+            exec:
+              command: ["sh","-c","pwd"]
+            initialDelaySeconds: 45
+         livenessProbe:
+          httpGet:
+            path: /_up
+            port: 5984
+            scheme: HTTP
+          initialDelaySeconds: 30
+         image: couchdb:latest
+         env:
+           - name: COUCHDB_USER
+             value: admin
+           - name: COUCHDB_PASSWORD
+             value: adminpw
+         ports:
+          - containerPort: 5984
+       - name: peer%NUM%-%ORG%-ck-com
+         image: hyperledger/fabric-peer:latest
+         workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+         env:
+          - name: CORE_PEER_ID
+            value: peer%NUM%-%ORG%-ck-com
+          - name: CORE_PEER_ADDRESS
+            value: peer%NUM%-%ORG%-ck-com:7051
+          - name: CORE_PEER_ADDRESSAUTODETECT
+            value: "true"
+          - name: CORE_PEER_CHAINCODELISTENADDRESS
+            value: 0.0.0.0:7052
+          - name: CORE_OPERATIONS_LISTENADDRESS
+            value: 0.0.0.0:9443
+          - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
+            value: peer%NUM%-%ORG%-ck-com:7051
+          - name: CORE_PEER_GOSSIP_BOOTSTRAP
+            value: peer%NUM%-%ORG%-ck-com:7051
+          - name: CORE_PEER_LOCALMSPID
+            value: %MSP%OrgMSP
+          - name: CORE_PEER_MSPCONFIGPATH
+            value: /etc/hyperledger/fabric/msp
+          - name: CORE_VM_ENDPOINT
+            value: unix:///host/var/run/docker.sock
+          - name: FABRIC_LOGGING_SPEC
+            value: "DEBUG"
+          - name: CORE_PEER_GOSSIP_USELEADERELECTION
+            value: "true"
+          - name: CORE_PEER_GOSSIP_ORGLEADER
+            value: "false"
+          - name: CORE_PEER_PROFILE_ENABLED 
+            value: "true"
+          - name: CORE_PEER_TLS_ENABLED
+            value: "true"
+          - name: CORE_PEER_TLS_CERT_FILE
+            value: /etc/hyperledger/fabric/tls/server.crt
+          - name: CORE_PEER_TLS_KEY_FILE
+            value: /etc/hyperledger/fabric/tls/server.key
+          - name: CORE_PEER_TLS_ROOTCERT_FILE
+            value: /etc/hyperledger/fabric/tls/ca.crt
+          - name: CORE_PEER_TLS_CLIENTROOTCAS_FILES
+            value: /shared/channel/crypto/peerOrganizations/%ORG%Org.ck.com/users/Admin@%ORG%Org.ck.com/tls/ca.crt
+          - name: CORE_PEER_TLS_CLIENTCERT_FILE
+            value: /shared/channel/crypto/peerOrganizations/%ORG%Org.ck.com/users/Admin@%ORG%Org.ck.com/tls/client.crt
+          - name: CORE_PEER_TLS_CLIENTKEY_FILE
+            value: /shared/channel/crypto/peerOrganizations/%ORG%Org.ck.com/users/Admin@%ORG%Org.ck.com/tls/client.key
+          - name: CORE_LEDGER_STATE_STATEDATABASE
+            value: CouchDB
+          - name: CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS
+            value: localhost:5984
+          - name: ORG
+            value: %ORG%
+          - name: GODEBUG
+            value: "netdns=go"
+          - name: FABRIC_LOGGING_SPEC
+            value: debug
+          - name: FABRIC_CFG_PATH
+            value: /etc/hyperledger/fabric
+          - name: CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME
+            value: admin
+          - name: CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+            value: adminpw
+         ports:
+          - containerPort: 7051
+          - containerPort: 7052
+          - containerPort: 9443
+         startupProbe:
+            exec:
+              command: ["sh","-c","test -e /etc/hyperledger/fabric/msp && test -e /etc/hyperledger/fabric/tls"]
+            initialDelaySeconds: 45
+         livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 9443
+            scheme: HTTP
+          initialDelaySeconds: 45
+         command: ["sh"]
+         args:  ["-c",  "peer node start"]
+         volumeMounts: 
+          - name: shared
+            mountPath: /shared
+          - name: shared
+            mountPath: /etc/hyperledger/fabric/msp
+            subPath: channel/crypto/peerOrganizations/%ORG%Org.ck.com/peers/peer%NUM%.%ORG%Org.ck.com/msp
+          - name: shared
+            mountPath: /etc/hyperledger/fabric/tls
+            subPath: channel/crypto/peerOrganizations/%ORG%Org.ck.com/peers/peer%NUM%.%ORG%Org.ck.com/tls
+          - name: dockersocket
+            mountPath: /host/var/run/
+          - name: shared
+            mountPath: /etc/hyperledger/channel
+            subPath: channel
+            
+     volumes:
+       - name: shared
+         persistentVolumeClaim:
+             claimName: minio-pvc
+       - name: dockersocket
+         hostPath:
+           path: /var/run/

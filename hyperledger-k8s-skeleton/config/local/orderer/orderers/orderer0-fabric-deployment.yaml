@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: orderer0-local
+  name: orderer0-ck-com
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+       app: hyperledger
+       role: orderer
+       org: orderer0
+       name: orderer0-ck-com
+  template:
+    metadata:
+      labels:
+       app: hyperledger
+       role: orderer
+       org: orderer0
+       name:  orderer0-ck-com
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: name
+                operator: In
+                values:
+                - %NODE%
+      containers:
+        - name:  orderer0-ck-com
+          image: hyperledger/fabric-orderer:latest
+          workingDir: /opt/gopath/src/github.com/hyperledger/fabric
+          env:
+            - name: FABRIC_CA_CLIENT_HOME
+              value: /etc/hyperledger/orderer
+            - name: FABRIC_LOGGING_SPEC
+              value: "info"
+            - name: ORDERER_HOME
+              value: /tmp/hyperledger/orderer
+            - name: ORDERER_HOST
+              value: orderer0-ck-com
+            - name: CONFIGTX_ORDERER_ADDRESSES
+              value: orderer0.ck.com
+            - name: ORDERER_GENERAL_LISTENADDRESS
+              value: 0.0.0.0
+            - name: ORDERER_GENERAL_LISTENERPORT
+              value: 7050
+            - name: ORDERER_GENERAL_GENESISMETHOD
+              value: file
+            - name: ORDERER_GENERAL_LOCALMSPID
+              value: OrdererckMSP
+            - name: ORDERER_GENERAL_LOCALMSPDIR
+              value: /var/hyperledger/orderer/msp
+            - name: ORDERER_GENERAL_TLS_ENABLED
+              value: "true"
+            - name: ORDERER_GENERAL_TLS_PRIVATEKEY
+              value: /var/hyperledger/orderer/tls/server.key
+            - name: ORDERER_GENERAL_TLS_CERTIFICATE
+              value: /var/hyperledger/orderer/tls/server.crt
+            - name: ORDERER_GENERAL_LOGLEVEL
+              value: info
+            - name: ORDERER_DEBUG_BROADCASTTRACEDIR
+              value: data/logs
+            - name: ORG
+              value: orderer0
+            - name: ORDERER_GENERAL_TLS_ROOTCAS
+              value: '[/var/hyperledger/orderer/tls/ca.crt]'
+            - name: ORDERER_GENERAL_TLS_CLIENTROOTCAS
+              value: '[/var/hyperledger/orderer/tls/ca.crt]'
+            - name: ORDERER_KAFKA_VERBOSE
+              value: "true"
+            - name: ORDERER_KAFKA_VERSION
+              value: 1.0.0
+            - name: GODEBUG
+              value: "netdns=go"
+            - name: ORDERER_ADMIN_LISTENADDRESS
+              value: 0.0.0.0:10000
+            - name: ORDERER_GENERAL_BOOTSTRAPMETHOD
+              value: none
+            - name: ORDERER_ADMIN_TLS_ENABLED
+              value: "true"
+            - name: ORDERER_CHANNELPARTICIPATION_ENABLED
+              value: "true"
+            - name: ORDERER_ADMIN_TLS_PRIVATEKEY
+              value: /var/hyperledger/orderer/tls/server.key
+            - name: ORDERER_ADMIN_TLS_CERTIFICATE
+              value: /var/hyperledger/orderer/tls/server.crt
+            - name: ORDERER_ADMIN_TLS_CLIENTROOTCAS
+              value: '[/var/hyperledger/orderer/tls/ca.crt]'
+            - name: ORDERER_ADMIN_TLS_ROOTCAS
+              value: '[/var/hyperledger/orderer/tls/ca.crt]'
+            - name: ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY
+              value: /var/hyperledger/orderer/tls/server.key
+            - name: ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE
+              value: /var/hyperledger/orderer/tls/server.crt
+            - name: ORDERER_OPERATIONS_LISTENADDRESS
+              value: 0.0.0.0:8443
+          ports:
+            - containerPort: 7050
+            - containerPort: 8443
+          startupProbe:
+            exec:
+              command: ["sh","-c","test -e /var/hyperledger/orderer/tls && test -e /var/hyperledger/orderer/msp"]
+            initialDelaySeconds: 45
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8443
+              scheme: HTTP 
+            initialDelaySeconds: 45
+          command: ["sh"]
+          args:  ["-c", "orderer"]
+          volumeMounts: 
+            - mountPath: /var/hyperledger/orderer/msp
+              subPath: channel/crypto/ordererOrganizations/ck.com/orderers/orderer0.ck.com/msp
+              name: shared
+            - mountPath: /var/hyperledger/orderer/tls
+              subPath: channel/crypto/ordererOrganizations/ck.com/orderers/orderer0.ck.com/tls
+              name: shared
+      volumes:
+        - name: shared
+          persistentVolumeClaim:
+              claimName: minio-pvc

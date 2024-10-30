@@ -1,0 +1,29 @@
+micro:
+  name: dlt-business-logic
+http_server:
+  type: restful
+  url: 127.0.0.1
+  port: 15000
+  swagger: ../docs/swagger.yaml
+  log_level: INFO #[TRACE, DEBUG, INFO, WARN, ERROR]
+gateway_params:
+  msp_id: "testOrgMSP"
+  crypto_path: "../../dlt-network/local/channel/crypto/peerOrganizations/testOrg.test2.com"
+  cert_path: "../../dlt-network/local/channel/crypto/peerOrganizations/testOrg.test2.com/users/User1@testOrg.test2.com/msp/signcerts/User1@testOrg.test2.com-cert.pem"
+  key_path: "../../dlt-network/local/channel/crypto/peerOrganizations/testOrg.test2.com/users/User1@testOrg.test2.com/msp/keystore/"
+  tls_cert_path: "../../dlt-network/local/channel/crypto/peerOrganizations/testOrg.test2.com/peers/peer0.testOrg.test2.com/tls/ca.crt"
+  peer_endpoint: "localhost:9051"
+  gateway_peer: "peer0.testOrg.test2.com"
+  channel_name: "test-channel"
+kafka:
+  brokers:
+    - localhost:9092
+  input_topics:
+    smart_contract_dlt_topic: smart-contract-dlt-topic
+  output_topics:
+    error_smart_contract_dlt_topic: error-smart-contract-dlt-topic
+  retries:
+    max_retries: 3
+    delay: 5 #seconds
+  consumer:
+    num_workers: 20

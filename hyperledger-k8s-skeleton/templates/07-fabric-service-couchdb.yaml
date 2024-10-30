@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb-peer%NUM%-%ORG%
+  namespace: %ORG%-%HLF_ENV%
+spec:
+  selector:
+   app: hyperledger
+   role: peer
+   org: %ORG%
+   name: peer%NUM%-%ORG%-ck-com
+  externalTrafficPolicy: Local
+  externalIPs:
+  - %SVC_IP%
+  ports:
+    - port: %OUT_PORT%
+      targetPort: 5984
+      name: endpoint
+      protocol: TCP
+  type: LoadBalancer
+  

@@ -1,0 +1,41 @@
+
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rca-org2-pv
+  labels:
+    pv-name: rca-org2-pv
+spec:
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+  nfs:
+    server: %EFSSERVER%
+    path: /rca-org2
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  namespace:  org2-local
+  name: rca-org2-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  selector:
+    matchLabels:
+      pv-name: rca-org2-pv
+  resources:
+    requests:
+      storage: 10Mi
+

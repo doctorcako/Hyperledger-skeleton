@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace:  %ORG%-%HLF_ENV%
+  name: ica-%ORG%
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+       app: hyperledger
+       role: ca
+       org: %ORG%
+       name: ica-%ORG%
+  template:
+    metadata:
+      labels:
+       app: hyperledger
+       role: ca
+       org: %ORG%
+       name: ica-%ORG%
+    spec:
+     containers:
+       - name: ica-%ORG%
+         image: hyperledger/fabric-ca:%FABRIC_TAG%
+         env:
+         - name:  FABRIC_CA_SERVER_HOME
+           value: /etc/hyperledger/fabric-ca
+         - name:  FABRIC_CA_SERVER_TLS_ENABLED
+           value: "true"
+         - name:  FABRIC_CA_SERVER_CA_NAME
+           value: ica-%ORG%.%HLF_ENV%
+         - name:  FABRIC_CA_SERVER_CSR_HOSTS
+           value: ica-%ORG%.%HLF_ENV%
+         - name:  FABRIC_CA_SERVER_DEBUG
+           value: "true"
+         - name:  BOOTSTRAP_USER_PASS
+           value: ica-%ORG%-admin:ica-%ORG%-adminpw
+         - name:  TARGET_CHAINFILE
+           value: /data/%ORG%-ca-chain.pem
+         - name:  ORGS
+           value: %ORGS%
+         - name:  PARENT_URL
+           value: https://rca-%ORG%-admin:rca-%ORG%-adminpw@rca-%ORG%.%HLF_ENV%:7054
+         - name:  ORG
+           value: %ORG%
+         ports:
+          - containerPort: 7054
+         command: ["sh"]
+         args:  ["-c", "fabric-ca-server start -b $BOOTSTRAP_USER_PASS"]
+         volumeMounts: 
+          - mountPath: /shared
+            name: shared
+     volumes:
+       - name: shared
+         persistentVolumeClaim:
+             claimName: minio-pvc

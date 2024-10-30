@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: orderer0-local
+  name: orderer0-ck-com
+spec:
+ selector:
+   app: hyperledger
+   role: orderer
+   org: orderer0
+   name: orderer0-ck-com
+ type: ClusterIP
+ ports:
+  - name: endpoint
+    protocol: TCP
+    port: 7050
+    targetPort: 7050
+    nodePort: 30304
+  - name: admin
+    protocol: TCP
+    port: 10000
+    targetPort: 10000
+    nodePort: 30304
+  - name: operations
+    protocol: TCP
+    port: 8443
+    targetPort: 8443 

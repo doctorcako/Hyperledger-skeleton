@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: org3-local
+  name: peer0-org3-ck-com
+spec:
+ selector:
+   app: hyperledger
+   role: peer
+   org: org3
+   name: peer0-org3-ck-com
+ type: ClusterIP
+ ports:
+   - name: endpoint
+     protocol: TCP
+     port: 7051
+     targetPort: 7051
+     nodePort: 30415
+   - name: endpoint-chaincode
+     protocol: TCP
+     port: 7052
+     targetPort: 7052
+     nodePort: 30416
+   - name: endpoint-operations
+     protocol: TCP
+     port: 9443
+     targetPort: 9443

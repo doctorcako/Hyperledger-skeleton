@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: org3-local
+  name: cli
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+       app: hyperledger
+       role: client
+       org: org3
+       name: cli
+  template:
+    metadata:
+      labels:
+       app: hyperledger
+       role: client
+       org: org3
+       name: cli
+    spec:
+     affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: name
+              operator: In
+              values:
+              - %NODE%
+     containers:
+       - name: cli
+         image: hyperledger/fabric-tools:latest
+         workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+         env:
+          - name: GOPATH
+            value: /opt/gopath
+          - name: CORE_VM_ENDPOINT
+            value: unix:///host/var/run/docker.sock
+          - name: CORE_PEER_ID
+            value: cli
+          - name: CORE_PEER_ADDRESS
+            value: peer0-ck-ck-com:7051
+          - name: CORE_PEER_LOCALMSPID
+            value: ckOrgMSP
+          - name: CORE_PEER_TLS_ENABLED
+            value: "true"
+          - name: CORE_PEER_TLS_CERT_FILE
+            value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ckOrg.ck.com/users/peer0.ckOrg.ck.com/tls/server.crt
+          - name: CORE_PEER_TLS_KEY_FILE
+            value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ckOrg.ck.com/peers/peer0.ckOrg.ck.com/tls/server.key
+          - name: CORE_PEER_TLS_ROOTCERT_FILE
+            value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ckOrg.ck.com/peers/peer0.ckOrg.ck.com/tls/ca.crt
+          - name: CORE_PEER_MSPCONFIGPATH
+            value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/ckOrg.ck.com/users/Admin@ckOrg.ck.com/msp
+          - name: CORE_PEER_TLS_CLIENTROOTCAS_FILES
+            value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org3Org.ck.com/users/Admin@org3Org.ck.com/tls/ca.crt
+          - name: CORE_PEER_TLS_CLIENTCERT_FILE
+            value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org3Org.ck.com/users/Admin@org3Org.ck.com/tls/client.crt
+          - name: CORE_PEER_TLS_CLIENTKEY_FILE
+            value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org3Org.ck.com/users/Admin@org3Org.ck.com/tls/client.key
+         command: ["sh"]
+         args:  ["-c", "while true; do sleep 90; done;"]
+         startupProbe:
+            exec:
+              command: ["sh","-c","export HOME_PATH=/opt/gopath/src/github.com/hyperledger/fabric/peer && test -e $HOME_PATH/channel-artifacts && test -e $HOME_PATH/crypto && test -e $HOME_PATH/scripts && test -e $HOME_PATH/../chaincode"]
+            initialDelaySeconds: 5
+         lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "curl https://www.google.com && exit $? "]
+         volumeMounts: 
+          - mountPath: /shared
+            name: shared
+          - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+            name: shared
+            subPath: channel/channel-artifacts
+          - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto
+            name: shared
+            subPath: channel/crypto
+          - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/scripts
+            name: shared
+            subPath: scripts
+          - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/chaincode/
+            name: shared
+            subPath: smart-contracts
+          - name: dockersocket
+            mountPath: /host/var/run/docker.sock
+     volumes:
+       - name: shared
+         persistentVolumeClaim:
+             claimName: minio-pvc
+       - name: dockersocket
+         hostPath:
+           path: /var/run/docker.sock

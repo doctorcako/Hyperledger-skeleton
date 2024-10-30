@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: org3-local
+  name: ca-org3-local-com
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+       app: hyperledger
+       role: ca
+       org: org3
+       name: ca-org3-ck-com
+  template:
+    metadata:
+      labels:
+       app: hyperledger
+       role: ca
+       org: org3
+       name: ca-org3-ck-com
+    spec:
+     affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: name
+              operator: In
+              values:
+              - %NODE%
+     containers:
+       - name: ca-org3-ck-com
+         image: hyperledger/fabric-ca:latest
+         env:
+         - name:  FABRIC_CA_HOME
+           value: /etc/hyperledger/fabric-ca
+         - name:  FABRIC_CA_SERVER_TLS_ENABLED
+           value: "true"
+         - name: FABRIC_CA_SERVER_CA_NAME
+           value: ca-%ORG_CA_DIR%
+         - name: FABRIC_CA_SERVER_PORT
+           value: "7054"
+         - name:  FABRIC_CA_SERVER_CSR_CN
+           value: ca-org3-ck-com
+         - name:  FABRIC_CA_SERVER_CSR_HOSTS
+           value: ca-%ORG_NAME%-ck-com, localhost
+         - name: FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS
+           value: 0.0.0.0:17054
+         ports:
+          - containerPort: 7054
+         startupProbe:
+            exec:
+              command: ["sh","-c","test -e /etc/hyperledger/fabric-ca/tls-cert.pem"]
+            initialDelaySeconds: 5
+         livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 17054
+              scheme: HTTP 
+            initialDelaySeconds: 5
+         command: ["sh"]
+         args:  ["-c", "fabric-ca-server start -d -b admin:adminpw"]
+         volumeMounts: 
+          - mountPath: /shared
+            name: shared
+     volumes:
+       - name: shared
+         persistentVolumeClaim:
+             claimName: minio-pvc
+

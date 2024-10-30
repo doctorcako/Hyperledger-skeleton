@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: orderer-orderer0-pv
+  labels:
+    pv-name: orderer-orderer0-pv
+spec:
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - nfsvers=4.1
+    - rsize=1048576
+    - wsize=1048576
+    - hard
+    - timeo=600
+    - retrans=2
+  nfs:
+    server: 
+    path: /orderer
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  namespace:  orderer0-%HLF_ENV
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  selector:
+    matchLabels:
+      pv-name: orderer-orderer0-pv
+  resources:
+    requests:
+      storage: 10Mi
+

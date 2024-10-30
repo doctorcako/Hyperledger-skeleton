@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: org1-local
+  name: ca-org1-ck-com
+spec:
+  selector:
+    app: hyperledger
+    role: ca
+    org: org1
+    name: ca-org1-ck-com
+  type: LoadBalance
+  externalTrafficPolicy: Local
+  ports:
+    - name: endpoint
+      protocol: TCP
+      port: 30105
+      targetPort: 7054
+      nodePort: 30105
